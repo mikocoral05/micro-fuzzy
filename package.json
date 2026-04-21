@@ -1,6 +1,6 @@
 {
   "name": "micro-fuzzy",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A sub-2kb, typo-tolerant fuzzy search library",
   "main": "./dist/micro-fuzzy.umd.cjs",
   "module": "./dist/micro-fuzzy.js",
