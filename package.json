@@ -1,6 +1,6 @@
 {
   "name": "micro-fuzzy",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A sub-2kb, typo-tolerant fuzzy search library",
   "repository": {
     "type": "git",
