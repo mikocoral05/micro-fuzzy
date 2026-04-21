@@ -1,7 +1,11 @@
 {
   "name": "micro-fuzzy",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A sub-2kb, typo-tolerant fuzzy search library",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mikocoral05/micro-fuzzy.git"
+  },
   "main": "./dist/micro-fuzzy.umd.cjs",
   "module": "./dist/micro-fuzzy.js",
   "type": "module",
