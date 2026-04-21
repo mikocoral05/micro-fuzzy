@@ -33,4 +33,4 @@ jobs:
       - name: Publish package
         run: npm publish --provenance --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} # Passes your secret token to npm
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_FUZZY }} # Passes your secret token to npm
