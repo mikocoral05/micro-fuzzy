@@ -9,6 +9,7 @@ A sub-2kb, typo-tolerant fuzzy search library for JavaScript and TypeScript.
 - **Smart Acronyms**: Matches acronyms like `GTA` to `Grand Theft Auto`.
 - **Deep Keys**: Search through deeply nested objects using dot-notation (`author.name.first`).
 - **Auto-Highlighting**: Optionally wraps matching characters in `<b>` tags for easy UI integration.
+- **Typed**: Ships TypeScript declarations for the public API.
 
 ## Installation
 
@@ -45,6 +46,12 @@ const typoResults = MicroFuzzy.search(dataset, "witch", {
 const deepResults = MicroFuzzy.search(dataset, "treasure", {
   keys: ["nested.deep.key"],
 });
+
+// String arrays work without keys
+const stringResults = MicroFuzzy.search(
+  ["Grand Theft Auto", "The Witcher 3: Wild Hunt", "Word Processor"],
+  "witch",
+);
 ```
 
 ## API
@@ -53,8 +60,31 @@ const deepResults = MicroFuzzy.search(dataset, "treasure", {
 
 - `data`: Array of objects (or strings) to search through.
 - `query`: The search string.
-- `options.keys`: Array of string paths to search within each object (e.g. `['title', 'author.name']`).
-- `options.highlight`: (Optional) Boolean. If `true`, returns a `highlighted` string with matches wrapped in `<b>` tags.
+- `options.keys`: Array of string paths to search within each object (e.g. `['title', 'author.name']`). Required for object datasets, not needed for string arrays.
+- `options.highlight`: (Optional) Boolean. If `true`, returns a `highlighted` string with matches wrapped in `<b>` tags. Source text is HTML-escaped before tags are added.
+
+## Quality Checks
+
+```bash
+npm test
+npm run compat
+npm run bench
+```
+
+- `npm test`: unit and fuzz-style regression coverage.
+- `npm run compat`: builds the library and verifies Node ESM, Node CommonJS, direct ESM bundle loading, and browser-style UMD globals.
+- `npm run bench`: builds the library and runs deterministic benchmarks against 1k, 5k, and 10k item datasets. The benchmark defaults to 3 warmup runs and 10 measured runs per scenario.
+
+## Compatibility Matrix
+
+| Scenario | Entry point | Status |
+| --- | --- | --- |
+| Node.js ESM | `import { MicroFuzzy } from "micro-fuzzy"` | Verified by `npm run compat` |
+| Node.js CommonJS | `const { MicroFuzzy } = require("micro-fuzzy")` | Verified by `npm run compat` |
+| Direct ESM bundle | `import { MicroFuzzy } from "./dist/micro-fuzzy.js"` | Verified by `npm run compat` |
+| Browser UMD global | `<script src="./dist/micro-fuzzy.umd.cjs"></script>` | Verified by `npm run compat` smoke test |
+
+The UMD build exposes the browser global as `window.MicroFuzzy.search(...)`.
 
 ## License
 

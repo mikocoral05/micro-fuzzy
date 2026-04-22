@@ -28,41 +28,95 @@ const ADJACENCY_MAP: Record<string, string> = {
   m: "jkn",
 };
 
-// Phase 2: Deep Dot-Notation Resolver
-function getNestedValue(obj: any, path: string): string | undefined {
-  const value = path.split(".").reduce((acc, part) => acc && acc[part], obj);
-  return typeof value === "string" ? value : undefined;
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+const OBJECT_KEYS_REQUIRED_ERROR =
+  "MicroFuzzy.search requires `options.keys` when searching object data.";
+
+type TextResolver = (item: Record<string, unknown>) => string | undefined;
+
+function createTextResolvers(keys?: string[]): TextResolver[] {
+  if (!keys?.length) {
+    return [];
+  }
+
+  return keys.map((key) => {
+    const parts = key.split(".");
+
+    return (item: Record<string, unknown>) => {
+      let value: unknown = item;
+
+      for (const part of parts) {
+        if (!isRecord(value)) {
+          return undefined;
+        }
+
+        value = value[part];
+      }
+
+      return typeof value === "string" ? value : undefined;
+    };
+  });
 }
 
 export interface SearchOptions {
-  keys: string[];
+  keys?: string[];
   highlight?: boolean;
 }
 
+export interface SearchResult<T> {
+  item: T;
+  score: number;
+  highlighted: string | null;
+}
+
 export class MicroFuzzy {
-  static search<T>(data: T[], query: string, options: SearchOptions) {
+  static search(data: string[], query: string, options?: SearchOptions): SearchResult<string>[];
+  static search<T>(data: T[], query: string, options: SearchOptions): SearchResult<T>[];
+  static search<T>(data: T[], query: string, options: SearchOptions = {}): SearchResult<T>[] {
     if (!query || query.trim() === "") {
       return [];
     }
 
     const lowerQuery = query.toLowerCase();
+    const shouldHighlight = options.highlight === true;
+    const textResolvers = createTextResolvers(options.keys);
 
     const results = data.map((item) => {
       let bestScore = -Infinity;
       let bestHighlight: string | null = null;
 
-      for (const key of options.keys) {
-        const text = getNestedValue(item, key);
-        if (!text) continue;
-
+      if (typeof item === "string") {
         const { score, highlighted } = this.scoreText(
-          text,
+          item,
           lowerQuery,
-          options.highlight,
+          shouldHighlight,
         );
-        if (score > bestScore) {
-          bestScore = score;
-          bestHighlight = highlighted;
+        return { item, score, highlighted };
+      }
+
+      if (isRecord(item)) {
+        if (textResolvers.length === 0) {
+          throw new Error(OBJECT_KEYS_REQUIRED_ERROR);
+        }
+
+        for (const resolveText of textResolvers) {
+          const text = resolveText(item);
+          if (!text) {
+            continue;
+          }
+
+          const { score, highlighted } = this.scoreText(
+            text,
+            lowerQuery,
+            shouldHighlight,
+          );
+          if (score > bestScore) {
+            bestScore = score;
+            bestHighlight = highlighted;
+          }
         }
       }
 
@@ -73,13 +127,13 @@ export class MicroFuzzy {
     return results.filter((r) => r.score > 0).sort((a, b) => b.score - a.score);
   }
 
-  private static scoreText(text: string, query: string, highlight = false) {
-    const q = query.toLowerCase();
+  private static scoreText(text: string, lowerQuery: string, highlight = false) {
+    const q = lowerQuery;
     const t = text.toLowerCase();
     const qLen = q.length;
     const tLen = t.length;
 
-    if (qLen === 0) return { score: 0, highlighted: text };
+    if (qLen === 0) return { score: 0, highlighted: null };
 
     // Phase 3: Smart Acronym Matching (e.g., "GTA" -> "Grand Theft Auto")
     const acronymMatch = t.match(/\b\w/g);
@@ -165,10 +219,19 @@ export class MicroFuzzy {
     }
 
     if (currI > 0 || maxScore < 0) {
-      return { score: 0, highlighted: text };
+      return { score: 0, highlighted: null };
     }
 
     return this.formatResult(text, maxScore, matches, highlight);
+  }
+
+  private static escapeHtml(text: string) {
+    return text
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
   }
 
   private static formatResult(
@@ -177,15 +240,19 @@ export class MicroFuzzy {
     matches: number[],
     highlight: boolean,
   ) {
-    if (!highlight || matches.length === 0) return { score, highlighted: text };
+    if (!highlight) {
+      return { score, highlighted: null };
+    }
+
     let result = "";
     let matchIdx = 0;
     for (let i = 0; i < text.length; i++) {
+      const escapedChar = this.escapeHtml(text[i]);
       if (matchIdx < matches.length && matches[matchIdx] === i) {
-        result += `<b>${text[i]}</b>`;
+        result += `<b>${escapedChar}</b>`;
         matchIdx++;
       } else {
-        result += text[i];
+        result += escapedChar;
       }
     }
     return { score, highlighted: result };

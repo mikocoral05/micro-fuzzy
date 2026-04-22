@@ -36,6 +36,13 @@ describe("MicroFuzzy Core Algorithm", () => {
     );
   });
 
+  it("should return null highlighted output when highlighting is disabled", () => {
+    const results = MicroFuzzy.search(dataset, "witch", {
+      keys: ["title"],
+    });
+    expect(results[0].highlighted).toBeNull();
+  });
+
   it("should find results using deep dot-notation keys", () => {
     const results = MicroFuzzy.search(dataset, "treasure", {
       keys: ["nested.deep.key"],
@@ -73,5 +80,40 @@ describe("MicroFuzzy Core Algorithm", () => {
   it("should return an empty array when the query is empty", () => {
     const results = MicroFuzzy.search(dataset, "", { keys: ["title"] });
     expect(results).toEqual([]);
+  });
+
+  it("should support searching string arrays without keys", () => {
+    const results = MicroFuzzy.search(
+      ["Grand Theft Auto", "The Witcher", "Word Processor"],
+      "witch",
+    );
+
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0].item).toBe("The Witcher");
+  });
+
+  it("should escape HTML while preserving <b> tags in highlighted output", () => {
+    const results = MicroFuzzy.search(
+      [{ title: '<img src=x onerror=alert(1)> Witch' }],
+      "witch",
+      {
+        keys: ["title"],
+        highlight: true,
+      },
+    );
+
+    expect(results[0].highlighted).toContain("&lt;img src=x onerror=alert(1)&gt;");
+    expect(results[0].highlighted).toContain(
+      "<b>W</b><b>i</b><b>t</b><b>c</b><b>h</b>",
+    );
+    expect(results[0].highlighted).not.toContain("<img");
+  });
+
+  it("should throw a clear error when object data is searched without keys", () => {
+    expect(() =>
+      MicroFuzzy.search([{ title: "The Witcher" }], "witch"),
+    ).toThrowError(
+      "MicroFuzzy.search requires `options.keys` when searching object data.",
+    );
   });
 });

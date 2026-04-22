@@ -8,20 +8,39 @@
   },
   "main": "./dist/micro-fuzzy.umd.cjs",
   "module": "./dist/micro-fuzzy.js",
+  "types": "./src/index.d.ts",
   "type": "module",
   "exports": {
     ".": {
+      "types": "./src/index.d.ts",
       "import": "./dist/micro-fuzzy.js",
       "require": "./dist/micro-fuzzy.umd.cjs"
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "src/index.d.ts"
   ],
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run",
+    "build": "vite build",
+    "precompat": "npm run build",
+    "compat": "node scripts/check-compat.mjs",
+    "prebench": "npm run build",
+    "bench": "node scripts/bench.mjs"
   },
   "devDependencies": {
-    "vitest": "^1.0.0"
+    "vitest": "^1.0.0",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.6",
+    "@semantic-release/npm": "^12.0.2",
+    "@semantic-release/release-notes-generator": "^14.1.0",
+    "semantic-release": "^25.0.3",
+    "vite": "^7.1.7"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
