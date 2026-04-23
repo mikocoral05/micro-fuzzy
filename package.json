@@ -21,6 +21,16 @@
     "dist",
     "src/index.d.ts"
   ],
+  "funding": [
+    {
+      "type": "ko-fi",
+      "url": "https://ko-fi.com/mikaeltenshio"
+    },
+    {
+      "type": "buymeacoffee",
+      "url": "https://buymeacoffee.com/mikaeltenshio"
+    }
+  ],
   "scripts": {
     "test": "vitest run",
     "build": "vite build",
